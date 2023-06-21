@@ -10,7 +10,7 @@ This one allows for a lot more customization._**
 Just like in your old Samsung device but this one's 
 with Flutter and is much more customizable.
 
-![](https://github.com/scisdev/better_pattern_lock/blob/master/media/demo.mp4)
+![](https://github.com/scisdev/better_pattern_lock/blob/master/media/demo.webm)
 
 You can hide content behind a visual password. 
 You can use it as a kind of spoiler alert or a content gate. 
