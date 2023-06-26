@@ -100,7 +100,7 @@ class _PatternLockScreenState extends State<PatternLockScreen> {
                           ],
                           stops: <double>[0.0, 0.25, 0.5, 0.75, 1.0],
                         ),
-                        isGlobal: false,
+                        isGlobal: true,
                       ),
                       drawLineToPointer: true,
                       cellBuilder: (ctx, ind, anim) {
