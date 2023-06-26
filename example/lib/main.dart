@@ -85,15 +85,6 @@ class _PatternLockScreenState extends State<PatternLockScreen> {
                               ),
                             ),
                           );
-                        Navigator.of(context).pushAndRemoveUntil(
-                          CupertinoPageRoute(builder: (ctx) {
-                            return const Scaffold(
-                                body: Center(
-                              child: Text('priv'),
-                            ));
-                          }),
-                          (_) => false,
-                        );
                       },
                       linkageSettings: PatternLockLinkageSettings.distance(3),
                       linkPainter: const PatternLockLinkGradientPainter(
