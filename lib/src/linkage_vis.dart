@@ -79,10 +79,14 @@ class _LinkPainterWidgetState extends State<_LinkPainterWidget>
     setState(() {});
   }
 
+  void _pointerListener() {
+    setState(() {});
+  }
+
   @override
   void initState() {
     widget.controller.addListener(_listener);
-    widget.currentPointer.addListener(() => setState(() {}));
+    widget.currentPointer.addListener(_pointerListener);
     super.initState();
   }
 
@@ -131,7 +135,7 @@ class _LinkPainterWidgetState extends State<_LinkPainterWidget>
   @override
   void dispose() {
     widget.controller.removeListener(_listener);
-    widget.currentPointer.dispose();
+    widget.currentPointer.removeListener(_pointerListener);
     connections.clear();
     super.dispose();
   }

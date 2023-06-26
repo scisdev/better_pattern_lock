@@ -114,6 +114,14 @@ class _PatternLockState extends State<PatternLock>
   );
 
   @override
+  void initState() {
+    pointer.addListener(() {
+      print('listening');
+    });
+    super.initState();
+  }
+
+  @override
   void didUpdateWidget(covariant PatternLock oldWidget) {
     if (oldWidget.height != widget.height || oldWidget.width != widget.width) {
       pattern.clear();

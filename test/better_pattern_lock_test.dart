@@ -21,7 +21,6 @@ void main() {
               strokeAlign: -1.0,
             ),
           ),
-          child: Center(child: Text(index.toString())),
         );
       },
       cellActiveArea: const PatternLockCellActiveArea(
@@ -29,10 +28,7 @@ void main() {
         units: PatternLockCellAreaUnits.relative,
         dimension: .75,
       ),
-      /*linkageSettings: const PatternLockLinkage(
-        maxLinkDistance: 2,
-        allowRepetitions: false,
-      ),*/
+      linkageSettings: PatternLockLinkageSettings.distance(2),
     ));
     final containers = find.byType(Container);
     expect(containers, findsNWidgets(25));

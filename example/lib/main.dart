@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:better_pattern_lock/better_pattern_lock.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -84,6 +85,15 @@ class _PatternLockScreenState extends State<PatternLockScreen> {
                               ),
                             ),
                           );
+                        Navigator.of(context).pushAndRemoveUntil(
+                          CupertinoPageRoute(builder: (ctx) {
+                            return const Scaffold(
+                                body: Center(
+                              child: Text('priv'),
+                            ));
+                          }),
+                          (_) => false,
+                        );
                       },
                       linkageSettings: PatternLockLinkageSettings.distance(3),
                       linkPainter: const PatternLockLinkGradientPainter(
@@ -99,7 +109,7 @@ class _PatternLockScreenState extends State<PatternLockScreen> {
                           ],
                           stops: <double>[0.0, 0.25, 0.5, 0.75, 1.0],
                         ),
-                        isGlobal: true,
+                        isGlobal: false,
                       ),
                       drawLineToPointer: true,
                       cellBuilder: (ctx, ind, anim) {
