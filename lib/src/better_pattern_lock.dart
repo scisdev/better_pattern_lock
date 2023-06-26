@@ -289,6 +289,8 @@ class _PatternLockState extends State<PatternLock>
     if (rb == null) return;
     // pointer position is global, compare apples to apples
     final globalOffset = rb.localToGlobal(Offset.zero);
+    // check if position is within our bounds
+    if (!(globalOffset & rb.size).contains(position)) return;
     position -= globalOffset;
     if (widget.drawLineToPointer) {
       pointer.value = position;
