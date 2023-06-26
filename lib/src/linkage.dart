@@ -1,7 +1,55 @@
 part of 'better_pattern_lock.dart';
 
 /// Controls the process of deciding which cells can and cannot connect.
-class PatternLockLinkageSettings {
+///
+/// Implement this interface to create custom linking behaviours.
+abstract class PatternLockLinkageSettings {
+  const PatternLockLinkageSettings();
+
+  /// Convenience method to create [DistanceBasedPatternLockLinkageSettings].
+  factory PatternLockLinkageSettings.distance(int distance) {
+    return DistanceBasedPatternLockLinkageSettings(
+      allowRepetitions: false,
+      maxLinkDistance: distance,
+    );
+  }
+
+  /// Convenience to check if [link] is in [pattern], since
+  /// links are bidirectional.
+  bool patternContainsLink(List<int> pattern, (int, int) link) {
+    for (int i = 0; i < pattern.length - 1; i++) {
+      final c = pattern[i];
+      final n = pattern[i + 1];
+      final f = link.$1;
+      final s = link.$2;
+      if ((c == f && n == s) || (n == f && c == s)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /// If this returns true, [cell] will be added to [currentPattern].
+  bool canConnect(
+    /// size of pattern lock
+    ({int width, int height}) dim,
+
+    /// current pattern
+    List<int> pattern,
+
+    /// cell to be considered
+    int cell,
+  );
+}
+
+/// An implementation of [PatternLockLinkageSettings]
+/// based on distance between cells.
+///
+/// Horizontal, vertical, or diagonal skips are never allowed
+/// for this implementation.
+class DistanceBasedPatternLockLinkageSettings
+    extends PatternLockLinkageSettings {
   /// Controls how far the current pattern cell can be from the last
   /// activated cell for current cell to be activated.
   ///
@@ -21,89 +69,76 @@ class PatternLockLinkageSettings {
   /// `maxLinkDistance` = 2 allows movement to all adjacent
   /// cells *and* like a knight in chess, and so on
   ///
-  /// Horizontal, vertical, or diagonal skips are never allowed.
+  /// Horizontal, vertical, or diagonal skips are never allowed
+  /// for this implementation.
   final int maxLinkDistance;
 
   /// Whether the already activated pattern cell can be activated again from
-  /// the last activated cell. Cycles (repeated connections from activated cell
-  /// to another activated cell) are never allowed.
+  /// the last activated cell.
   final bool allowRepetitions;
 
-  const PatternLockLinkageSettings({
-    this.maxLinkDistance = 1,
-    this.allowRepetitions = false,
+  const DistanceBasedPatternLockLinkageSettings({
+    required this.maxLinkDistance,
+    required this.allowRepetitions,
   }) : assert(maxLinkDistance > 0);
+
+  @override
+  bool canConnect(
+    ({int width, int height}) dim,
+    List<int> pattern,
+    int cell,
+  ) {
+    if (pattern.isEmpty) return true;
+
+    final last = pattern.last;
+    final (x, y) = (cell % dim.width, cell ~/ dim.width);
+    final (lx, ly) = (last % dim.width, last ~/ dim.width);
+    final (dx, dy) = ((x - lx).abs(), (y - ly).abs());
+    if (dy == 0 && dx > 1) return false;
+    if (dx == 0 && dy > 1) return false;
+    if (dy > 1 && dx > 1 && dy == dx) return false;
+    if (math.max(dy, dx) > maxLinkDistance) return false;
+    if (allowRepetitions) {
+      return !patternContainsLink(pattern, (last, cell));
+    } else {
+      return !pattern.contains(cell);
+    }
+  }
 }
 
 /// Linkage between pattern lock cells.
-/// [from] and [to] are from 1 to [PatternLock.width] * [PatternLock.height].
-///
-/// There are convenience methods to get row
-/// and column numbers (counting from 0 in this case!) of [from] and [to].
 class PatternLockCellLinkage {
-  /// Start of this linkage.
-  /// Goes from 1 to [PatternLock.width] * [PatternLock.height].
-  final int from;
+  /// Start (or end) of this linkage.
+  final int a;
 
-  /// End of this linkage.
-  /// Goes from 1 to [PatternLock.width] * [PatternLock.height].
-  final int to;
-
-  /// Convenience method to get row number the start of this linkage is in.
-  ///
-  /// Notice that rows and columns count from 0, unlike cells,
-  /// which count from 1.
-  int fromRow(int lockWidth) {
-    return (from - 1) ~/ lockWidth;
-  }
-
-  /// Convenience method to get column number the start of this linkage is in.
-  ///
-  /// Notice that rows and columns count from 0, unlike cells,
-  /// which count from 1.
-  int fromColumn(int lockWidth) {
-    return (from - 1) % lockWidth;
-  }
-
-  /// Convenience method to get row number the end of this linkage is in.
-  ///
-  /// Notice that rows and columns count from 0, unlike cells,
-  /// which count from 1.
-  int toRow(int lockWidth) {
-    return (to - 1) ~/ lockWidth;
-  }
-
-  /// Convenience method to get column number the end of this linkage is in.
-  ///
-  /// Notice that rows and columns count from 0, unlike cells,
-  /// which count from 1.
-  int toColumn(int lockWidth) {
-    return (to - 1) % lockWidth;
-  }
+  /// End (or start) of this linkage.
+  final int b;
 
   PatternLockCellLinkage({
-    required this.from,
-    required this.to,
+    required this.a,
+    required this.b,
   });
 
+  /// Linkage is bidirectional. So we make comparisons bidirectional too.
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is PatternLockCellLinkage &&
           runtimeType == other.runtimeType &&
-          ((from == other.from && to == other.to) ||
-              (from == other.to && to == other.from));
+          ((a == other.a && b == other.b) || (a == other.b && b == other.a));
 
   @override
-  int get hashCode => from.hashCode ^ to.hashCode;
+  int get hashCode => b ^ a;
 }
 
-// Info about a linkage
+// Internal-use info about a linkage
 class _LinkageInfo {
   // last updated timestamp
   final int timestamp;
+
   // last value
   final double value;
+
   // direction. false if we disappear, true if we appear
   final bool direction;
 

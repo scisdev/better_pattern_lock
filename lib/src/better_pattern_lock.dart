@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 
 part 'active_area.dart';
 part 'custom_layout_delegate.dart';
+part 'link_painter.dart';
 part 'linkage.dart';
 part 'linkage_vis.dart';
 part 'position_reporter.dart';
@@ -24,6 +25,9 @@ class PatternLock extends StatefulWidget {
   /// Controls the process of deciding which cells can and cannot connect.
   final PatternLockLinkageSettings linkageSettings;
 
+  /// Painter for each link in pattern lock.
+  final PatternLockLinkPainter? linkPainter;
+
   /// Animation duration for appearing and disappearing cells and links.
   final Duration animationDuration;
 
@@ -36,7 +40,7 @@ class PatternLock extends StatefulWidget {
   /// Optional builder for each of [width] * [height] cells.
   /// [position] is cell's position in the grid,
   /// counting left to right (should consider directionality?),
-  /// top to bottom, **_starting from 1_**.
+  /// top to bottom.
   /// [anim] is the current animation value of this cell
   /// and goes from 0.0 (inactive) to 1.0 (active).
   final Widget Function(
@@ -47,18 +51,6 @@ class PatternLock extends StatefulWidget {
 
   /// See [PatternLockCellActiveArea]
   final PatternLockCellActiveArea cellActiveArea;
-
-  /// See [PatternLockLinkAppearance].
-  /// If both this and [linkAppearanceBuilder] are null,
-  /// then default appearance will be used.
-  final PatternLockLinkAppearance? linkAppearance;
-
-  /// This builder allows to define custom link appearance for each link.
-  /// If this is defined, [linkAppearance] must be null.
-  final PatternLockLinkAppearance Function(
-    BuildContext context,
-    PatternLockCellLinkage link,
-  )? linkAppearanceBuilder;
 
   /// Whether to do [HapticFeedback] on cell activation.
   final bool enableFeedback;
@@ -77,23 +69,18 @@ class PatternLock extends StatefulWidget {
       units: PatternLockCellAreaUnits.relative,
       shape: PatternLockCellAreaShape.square,
     ),
-    this.linkageSettings = const PatternLockLinkageSettings(
+    this.linkageSettings = const DistanceBasedPatternLockLinkageSettings(
       allowRepetitions: false,
       maxLinkDistance: 1,
     ),
+    this.linkPainter,
     this.cellBuilder,
     this.onUpdate,
-    this.linkAppearance,
-    this.linkAppearanceBuilder,
     this.enableFeedback = true,
     this.animationCurve = Curves.linear,
   })  : assert(
           width > 0 && height > 0,
           'Both width and height must be not less than 1',
-        ),
-        assert(
-          linkAppearanceBuilder == null || linkAppearance == null,
-          'linkAppearance must be null if linkAppearanceBuilder is not null',
         ),
         super(key: key);
 
@@ -179,9 +166,9 @@ class _PatternLockState extends State<PatternLock>
               children: [
                 LayoutId(
                   id: _linkPainterId,
-                  child: _LinkPainter(
+                  child: _LinkPainterWidget(
+                    painter: widget.linkPainter ?? _defaultPainter(context),
                     size: (width: widget.width, height: widget.height),
-                    appearance: getLinkageAppearance,
                     curve: widget.animationCurve,
                     controller: controller,
                     pattern: pattern,
@@ -193,10 +180,10 @@ class _PatternLockState extends State<PatternLock>
                     id: i,
                     child: _PatternCellAnimatedBuilder(
                       controller: controller,
-                      isActive: pattern.contains(i + 1),
+                      isActive: pattern.contains(i),
                       builder: (ctx, anim) {
                         final v = widget.animationCurve.transform(anim);
-                        return widget.cellBuilder?.call(ctx, i + 1, v) ??
+                        return widget.cellBuilder?.call(ctx, i, v) ??
                             _defaultCellBuilder(widget.cellActiveArea, v);
                       },
                     ),
@@ -209,16 +196,36 @@ class _PatternLockState extends State<PatternLock>
     );
   }
 
-  PatternLockLinkAppearance? getLinkageAppearance(PatternLockCellLinkage link) {
-    if (widget.linkAppearanceBuilder != null) {
-      return widget.linkAppearanceBuilder!(context, link);
-    } else {
-      if (widget.linkAppearance != null) {
-        return widget.linkAppearance!;
-      } else {
-        return null;
-      }
-    }
+  Widget _defaultCellBuilder(PatternLockCellActiveArea aa, double anim) {
+    return LayoutBuilder(builder: (ctx, ctrx) {
+      return Container(
+        decoration: BoxDecoration(
+          borderRadius: aa.shape.isCircle
+              ? null
+              : BorderRadius.all(
+                  Radius.circular(ctrx.maxHeight / 4.0),
+                ),
+          shape: aa.shape.isCircle ? BoxShape.circle : BoxShape.rectangle,
+          color: Color.lerp(
+            Theme.of(ctx).colorScheme.background,
+            Theme.of(ctx).colorScheme.secondary,
+            anim,
+          )!,
+          border: Border.all(
+            width: 1.0,
+            color: Theme.of(ctx).colorScheme.onSurface.withAlpha(0x3f),
+            strokeAlign: -1.0,
+          ),
+        ),
+      );
+    });
+  }
+
+  PatternLockLinkPainter _defaultPainter(BuildContext context) {
+    return PatternLockLinkColorPainter(
+      color: Theme.of(context).colorScheme.secondary,
+      width: 5.0,
+    );
   }
 
   double _getItemActiveArea(double itemDim) {
@@ -228,16 +235,16 @@ class _PatternLockState extends State<PatternLock>
   }
 
   // expects local coords within pattern cell [0; cellDim)
-  bool _isWithinActivationAreaBounds(({double x, double y}) c, double cellDim) {
+  bool _isWithinActivationAreaBounds(Offset c, double cellDim) {
     final aa = _getItemActiveArea(cellDim);
 
     if (widget.cellActiveArea.shape.isCircle) {
-      final (dx, dy) = (2.0 * c.x - cellDim, 2.0 * c.y - cellDim);
+      final (dx, dy) = (2.0 * c.dx - cellDim, 2.0 * c.dy - cellDim);
       return dx * dx + dy * dy <= aa * aa;
     } else {
       final upper = (cellDim + aa) / 2.0;
       final lower = upper - aa;
-      return c.x < upper && c.x > lower && c.y < upper && c.y > lower;
+      return c.dx < upper && c.dx > lower && c.dy < upper && c.dy > lower;
     }
   }
 
@@ -269,32 +276,23 @@ class _PatternLockState extends State<PatternLock>
     if (!rect.contains(position)) return;
     position -= globalOffset;
 
-    final (x, y) = (position.dx ~/ cellDim, position.dy ~/ cellDim);
+    final x = position.dx ~/ cellDim;
+    final y = position.dy ~/ cellDim;
     // check if pointer is within activation area
     if (!_isWithinActivationAreaBounds(
-      (
-        x: position.dx - x * cellDim,
-        y: position.dy - y * cellDim,
+      Offset(
+        position.dx - x * cellDim,
+        position.dy - y * cellDim,
       ),
       cellDim,
     )) return;
 
-    if (pattern.isNotEmpty) {
-      // horizontal, vertical, or diagonal skips are never allowed
-      final last = pattern.last - 1;
-      final (lx, ly) = (last % widget.width, last ~/ widget.width);
-      final (dx, dy) = ((x - lx).abs(), (y - ly).abs());
-      if (dy == 0 && dx > 1) return;
-      if (dx == 0 && dy > 1) return;
-      if (dy > 1 && dx > 1 && dy == dx) return;
-      final max = widget.linkageSettings.maxLinkDistance;
-      if (math.max(dy, dx) > max) return;
-    }
-
-    final el = y * widget.width + x + 1;
-    if (!pattern.contains(el) ||
-        (widget.linkageSettings.allowRepetitions &&
-            !_patternContainsLink(pattern, (pattern.last, el)))) {
+    final el = y * widget.width + x;
+    if (widget.linkageSettings.canConnect(
+      (width: widget.width, height: widget.height),
+      pattern,
+      el,
+    )) {
       // activate cell
       if (widget.enableFeedback) {
         HapticFeedback.selectionClick();

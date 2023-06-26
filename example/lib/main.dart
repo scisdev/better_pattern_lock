@@ -85,22 +85,20 @@ class _PatternLockScreenState extends State<PatternLockScreen> {
                             ),
                           );
                       },
-                      linkAppearance: PatternLockLinkAppearance(
+                      linkPainter: const PatternLockLinkGradientPainter(
                         width: 10.0,
-                        gradient: PatternLockLinkGradient(
-                          gradient: const SweepGradient(
-                            center: FractionalOffset.center,
-                            colors: <Color>[
-                              Color(0xFF4285F4),
-                              Color(0xFF34A853),
-                              Color(0xFFFBBC05),
-                              Color(0xFFEA4335),
-                              Color(0xFF4285F4),
-                            ],
-                            stops: <double>[0.0, 0.25, 0.5, 0.75, 1.0],
-                          ),
-                          isGlobal: true,
+                        gradient: SweepGradient(
+                          center: FractionalOffset.center,
+                          colors: <Color>[
+                            Color(0xFF4285F4),
+                            Color(0xFF34A853),
+                            Color(0xFFFBBC05),
+                            Color(0xFFEA4335),
+                            Color(0xFF4285F4),
+                          ],
+                          stops: <double>[0.0, 0.25, 0.5, 0.75, 1.0],
                         ),
+                        isGlobal: true,
                       ),
                       cellBuilder: (ctx, ind, anim) {
                         return Material(

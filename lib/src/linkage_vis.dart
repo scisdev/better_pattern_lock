@@ -1,63 +1,17 @@
 part of 'better_pattern_lock.dart';
 
-/// Controls visuals of a line between two connected cells.
-class PatternLockLinkAppearance {
-  /// The color of the line.
-  /// /// If this is not null, then [gradient] must be null.
-  final Color? color;
-
-  /// The gradient of the line.
-  /// If this is not null, then [color] must be null.
-  final PatternLockLinkGradient? gradient;
-
-  /// The width of the line.
-  final double width;
-
-  const PatternLockLinkAppearance({
-    this.width = 1.0,
-    this.color,
-    this.gradient,
-  })  : assert(width >= 0),
-        assert(
-            (color != null && gradient == null) ||
-                (color == null && gradient != null),
-            'One of `color` and `gradient` must be specified, but not both');
-}
-
-/// Gradient and a way to apply it.
-///
-/// You can use one big (global) gradient
-/// or separate gradients for each link.
-class PatternLockLinkGradient {
-  /// Gradient to apply.
-  final Gradient gradient;
-
-  /// If true, gradient's top-left corner is center of item 1,
-  /// bottom-right corner is center of item [PatternLock.width] * [PatternLock.height].
-  ///
-  /// If false, each link gets its own gradient.
-  final bool isGlobal;
-
-  PatternLockLinkGradient({
-    required this.gradient,
-    required this.isGlobal,
-  });
-}
-
 // Paints lines between activated cells.
-class _LinkPainter extends StatefulWidget {
-  final PatternLockLinkAppearance? Function(
-    PatternLockCellLinkage link,
-  ) appearance;
+class _LinkPainterWidget extends StatefulWidget {
+  final PatternLockLinkPainter painter;
   final List<int> pattern;
   final AnimationController controller;
   final ({int width, int height}) size;
   final double itemDim;
   final Curve curve;
 
-  const _LinkPainter({
+  const _LinkPainterWidget({
     Key? key,
-    required this.appearance,
+    required this.painter,
     required this.pattern,
     required this.controller,
     required this.size,
@@ -66,10 +20,10 @@ class _LinkPainter extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<_LinkPainter> createState() => _LinkPainterState();
+  State<_LinkPainterWidget> createState() => _LinkPainterWidgetState();
 }
 
-class _LinkPainterState extends State<_LinkPainter>
+class _LinkPainterWidgetState extends State<_LinkPainterWidget>
     with TickerProviderStateMixin {
   late AnimationController controller;
 
@@ -137,7 +91,7 @@ class _LinkPainterState extends State<_LinkPainter>
   }
 
   @override
-  void didUpdateWidget(covariant _LinkPainter oldWidget) {
+  void didUpdateWidget(covariant _LinkPainterWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
 
     if (widget.controller != controller) {
@@ -156,8 +110,8 @@ class _LinkPainterState extends State<_LinkPainter>
     final now = _now();
     for (int i = 0; i < widget.pattern.length - 1; i++) {
       final link = PatternLockCellLinkage(
-        from: widget.pattern[i],
-        to: widget.pattern[i + 1],
+        a: widget.pattern[i],
+        b: widget.pattern[i + 1],
       );
 
       this.connections[link] = _LinkageInfo(
@@ -184,10 +138,6 @@ class _LinkPainterState extends State<_LinkPainter>
     super.dispose();
   }
 
-  PatternLockLinkAppearance _getAppearance(PatternLockCellLinkage link) {
-    return widget.appearance(link) ?? _defaultLinkageAppearance(context);
-  }
-
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
@@ -195,17 +145,15 @@ class _LinkPainterState extends State<_LinkPainter>
         size: widget.size,
         curve: widget.curve,
         itemDim: widget.itemDim,
+        painter: widget.painter,
         connections: connections,
-        appearance: _getAppearance,
       ),
     );
   }
 }
 
 class _LinkCanvasPainter extends CustomPainter {
-  final PatternLockLinkAppearance Function(
-    PatternLockCellLinkage link,
-  ) appearance;
+  final PatternLockLinkPainter painter;
   final HashMap<PatternLockCellLinkage, _LinkageInfo> connections;
   final ({int width, int height}) size;
   final double itemDim;
@@ -214,73 +162,24 @@ class _LinkCanvasPainter extends CustomPainter {
   _LinkCanvasPainter({
     required this.size,
     required this.curve,
+    required this.painter,
     required this.itemDim,
-    required this.appearance,
     required this.connections,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     final p = Paint();
-    final w = this.size.width;
-
     for (final conn in connections.entries) {
-      final appearance = this.appearance(conn.key);
-      final v = conn.value;
-      final t = curve.transform(v.value);
-      if (t == 0.0) continue;
-
-      final row1 = conn.key.fromRow(w);
-      final col1 = conn.key.fromColumn(w);
-      final row2 = conn.key.toRow(w);
-      final col2 = conn.key.toColumn(w);
-
-      final start = Offset((col1 + .5) * itemDim, (row1 + .5) * itemDim);
-      final end = Offset((col2 + .5) * itemDim, (row2 + .5) * itemDim);
-
-      p.strokeWidth = appearance.width;
-      if (appearance.color != null) {
-        p.color = appearance.color!.withAlpha(
-          (appearance.color!.alpha * t).toInt(),
-        );
-      } else {
-        final g = appearance.gradient!;
-        p.shader = g.gradient.createShader(
-          g.isGlobal
-              ? (Offset.zero & size).deflate(itemDim / 2)
-              : Rect.fromCenter(
-                  center: (start + end) / 2,
-                  width: start.dx == end.dx ? appearance.width : itemDim,
-                  height: start.dy == end.dy ? appearance.width : itemDim,
-                ),
-        );
-        // apply fading with color filter.
-        // This is identity filter but alpha channel ranges from 0 to 1.
-        p.colorFilter = ColorFilter.matrix(<double>[
-          1,
-          0,
-          0,
-          0,
-          0,
-          0,
-          1,
-          0,
-          0,
-          0,
-          0,
-          0,
-          1,
-          0,
-          0,
-          0,
-          0,
-          0,
-          t,
-          0,
-        ]);
-      }
-
-      canvas.drawLine(start, end, p);
+      painter.paint(
+        p,
+        canvas,
+        size,
+        conn.key,
+        this.size,
+        itemDim,
+        curve.transform(conn.value.value),
+      );
     }
   }
 
@@ -288,7 +187,7 @@ class _LinkCanvasPainter extends CustomPainter {
   bool shouldRepaint(covariant _LinkCanvasPainter old) {
     return old.itemDim != itemDim ||
         old.curve != curve ||
-        old.appearance != appearance ||
+        old.painter != painter ||
         old.connections != connections ||
         old.size != size;
   }

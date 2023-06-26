@@ -29,10 +29,10 @@ void main() {
         units: PatternLockCellAreaUnits.relative,
         dimension: .75,
       ),
-      linkageSettings: const PatternLockLinkageSettings(
+      /*linkageSettings: const PatternLockLinkage(
         maxLinkDistance: 2,
         allowRepetitions: false,
-      ),
+      ),*/
     ));
     final containers = find.byType(Container);
     expect(containers, findsNWidgets(25));
