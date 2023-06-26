@@ -85,6 +85,7 @@ class _PatternLockScreenState extends State<PatternLockScreen> {
                             ),
                           );
                       },
+                      linkageSettings: PatternLockLinkageSettings.distance(3),
                       linkPainter: const PatternLockLinkGradientPainter(
                         width: 10.0,
                         gradient: SweepGradient(
@@ -100,6 +101,7 @@ class _PatternLockScreenState extends State<PatternLockScreen> {
                         ),
                         isGlobal: true,
                       ),
+                      drawLineToPointer: true,
                       cellBuilder: (ctx, ind, anim) {
                         return Material(
                           type: MaterialType.circle,
@@ -111,7 +113,7 @@ class _PatternLockScreenState extends State<PatternLockScreen> {
                               shape: BoxShape.circle,
                               color: Color.lerp(
                                 Theme.of(ctx).colorScheme.background,
-                                Color(colors[ind - 1]),
+                                Color(colors[ind]),
                                 anim,
                               )!,
                               border: Border.all(

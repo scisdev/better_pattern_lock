@@ -21,7 +21,7 @@ void main() {
               strokeAlign: -1.0,
             ),
           ),
-          //child: Center(child: Text(index.toString())),
+          child: Center(child: Text(index.toString())),
         );
       },
       cellActiveArea: const PatternLockCellActiveArea(

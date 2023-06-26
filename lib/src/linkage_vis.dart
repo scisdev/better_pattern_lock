@@ -2,18 +2,22 @@ part of 'better_pattern_lock.dart';
 
 // Paints lines between activated cells.
 class _LinkPainterWidget extends StatefulWidget {
+  final ValueNotifier<Offset?> currentPointer;
   final PatternLockLinkPainter painter;
-  final List<int> pattern;
   final AnimationController controller;
   final ({int width, int height}) size;
+  final List<int> pattern;
+  final bool lineToPointer;
   final double itemDim;
   final Curve curve;
 
   const _LinkPainterWidget({
     Key? key,
+    required this.currentPointer,
+    required this.lineToPointer,
+    required this.controller,
     required this.painter,
     required this.pattern,
-    required this.controller,
     required this.size,
     required this.curve,
     required this.itemDim,
@@ -25,8 +29,6 @@ class _LinkPainterWidget extends StatefulWidget {
 
 class _LinkPainterWidgetState extends State<_LinkPainterWidget>
     with TickerProviderStateMixin {
-  late AnimationController controller;
-
   // A map of line connections and their states.
   // Kind of like with a cell state, but this time it's a map, not one value.
   final connections = HashMap<PatternLockCellLinkage, _LinkageInfo>();
@@ -34,7 +36,7 @@ class _LinkPainterWidgetState extends State<_LinkPainterWidget>
   void _listener() {
     if (connections.isEmpty) return;
 
-    if (controller.isDismissed) {
+    if (widget.controller.isDismissed) {
       connections.clear();
       setState(() {});
       return;
@@ -43,7 +45,7 @@ class _LinkPainterWidgetState extends State<_LinkPainterWidget>
     final now = _now();
     final toRemove = <PatternLockCellLinkage>[]; // remove links with value = 0
     for (final c in connections.entries) {
-      if (controller.isCompleted) {
+      if (widget.controller.isCompleted) {
         connections[c.key] = _LinkageInfo(
           value: 1.0,
           timestamp: now,
@@ -79,8 +81,8 @@ class _LinkPainterWidgetState extends State<_LinkPainterWidget>
 
   @override
   void initState() {
-    controller = widget.controller;
-    controller.addListener(_listener);
+    widget.controller.addListener(_listener);
+    widget.currentPointer.addListener(() => setState(() {}));
     super.initState();
   }
 
@@ -93,12 +95,6 @@ class _LinkPainterWidgetState extends State<_LinkPainterWidget>
   @override
   void didUpdateWidget(covariant _LinkPainterWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-
-    if (widget.controller != controller) {
-      controller.removeListener(_listener);
-      controller = widget.controller;
-      controller.addListener(_listener);
-    }
 
     if (widget.size != oldWidget.size) {
       this.connections.clear();
@@ -116,7 +112,8 @@ class _LinkPainterWidgetState extends State<_LinkPainterWidget>
 
       this.connections[link] = _LinkageInfo(
         timestamp: now,
-        value: this.connections[link]?.value ?? 0.0,
+        value:
+            this.connections[link]?.value ?? (widget.lineToPointer ? 1.0 : 0.0),
         direction: true,
       );
       connections.remove(link);
@@ -133,7 +130,8 @@ class _LinkPainterWidgetState extends State<_LinkPainterWidget>
 
   @override
   void dispose() {
-    controller.removeListener(_listener);
+    widget.controller.removeListener(_listener);
+    widget.currentPointer.dispose();
     connections.clear();
     super.dispose();
   }
@@ -146,16 +144,21 @@ class _LinkPainterWidgetState extends State<_LinkPainterWidget>
         curve: widget.curve,
         itemDim: widget.itemDim,
         painter: widget.painter,
+        pattern: widget.pattern,
         connections: connections,
+        lineToPointer:
+            widget.lineToPointer ? widget.currentPointer.value : null,
       ),
     );
   }
 }
 
 class _LinkCanvasPainter extends CustomPainter {
-  final PatternLockLinkPainter painter;
   final HashMap<PatternLockCellLinkage, _LinkageInfo> connections;
+  final PatternLockLinkPainter painter;
   final ({int width, int height}) size;
+  final Offset? lineToPointer;
+  final List<int> pattern;
   final double itemDim;
   final Curve curve;
 
@@ -163,24 +166,44 @@ class _LinkCanvasPainter extends CustomPainter {
     required this.size,
     required this.curve,
     required this.painter,
+    required this.pattern,
     required this.itemDim,
     required this.connections,
+    required this.lineToPointer,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final p = Paint();
+    final p = Paint()..strokeCap = StrokeCap.round;
     for (final conn in connections.entries) {
       painter.paint(
         p,
         canvas,
         size,
-        conn.key,
+        (a: center(conn.key.a), b: center(conn.key.b)),
         this.size,
         itemDim,
         curve.transform(conn.value.value),
       );
     }
+
+    if (pattern.isNotEmpty && lineToPointer != null) {
+      painter.paint(
+        p,
+        canvas,
+        size,
+        (a: center(pattern.last), b: lineToPointer!),
+        this.size,
+        itemDim,
+        1.0,
+      );
+    }
+  }
+
+  Offset center(num item) {
+    final row = item % size.width;
+    final col = item ~/ size.width;
+    return Offset((row + .5) * itemDim, (col + .5) * itemDim);
   }
 
   @override
@@ -189,6 +212,7 @@ class _LinkCanvasPainter extends CustomPainter {
         old.curve != curve ||
         old.painter != painter ||
         old.connections != connections ||
+        old.lineToPointer != lineToPointer ||
         old.size != size;
   }
 }

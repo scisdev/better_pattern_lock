@@ -28,22 +28,6 @@ abstract class PatternLockLinkPainter {
     );
   }
 
-  /// Convenience to get coords of centers of [link] within pattern lock dims
-  (Offset, Offset) getLinkCoords(
-    PatternLockCellLinkage link,
-    double itemDim,
-    int lockWidth,
-  ) {
-    final row1 = link.a % lockWidth;
-    final col1 = link.a ~/ lockWidth;
-    final row2 = link.b % lockWidth;
-    final col2 = link.b ~/ lockWidth;
-
-    final start = Offset((col1 + .5) * itemDim, (row1 + .5) * itemDim);
-    final end = Offset((col2 + .5) * itemDim, (row2 + .5) * itemDim);
-    return (start, end);
-  }
-
   /// This is called for each link (visual connection between cells).
   void paint(
     /// Paint to be used for drawing all links
@@ -55,8 +39,9 @@ abstract class PatternLockLinkPainter {
     /// Size of canvas, in dpi
     Size size,
 
-    /// Link in question
-    PatternLockCellLinkage link,
+    /// Link in question. [a] and [b] are centers of items in
+    /// pattern lock coordinates.
+    ({Offset a, Offset b}) link,
 
     /// Dimensions of pattern lock in items
     ({int height, int width}) dim,
@@ -88,7 +73,7 @@ class PatternLockLinkColorPainter extends PatternLockLinkPainter {
     Paint paint,
     Canvas canvas,
     Size size,
-    PatternLockCellLinkage link,
+    ({Offset a, Offset b}) link,
     ({int height, int width}) dim,
     double itemDim,
     double anim,
@@ -98,8 +83,7 @@ class PatternLockLinkColorPainter extends PatternLockLinkPainter {
       (color.alpha * anim).toInt(),
     );
 
-    final (start, end) = getLinkCoords(link, itemDim, dim.width);
-    canvas.drawLine(start, end, paint);
+    canvas.drawLine(link.a, link.b, paint);
   }
 }
 
@@ -128,20 +112,25 @@ class PatternLockLinkGradientPainter extends PatternLockLinkPainter {
     Paint paint,
     Canvas canvas,
     Size size,
-    PatternLockCellLinkage link,
+    ({Offset a, Offset b}) link,
     ({int height, int width}) dim,
     double itemDim,
     double anim,
   ) {
-    final (start, end) = getLinkCoords(link, itemDim, dim.width);
-
+    paint.strokeWidth = width;
     paint.shader = gradient.createShader(
       isGlobal
           ? (Offset.zero & size).deflate(itemDim / 2)
           : Rect.fromCenter(
-              center: (start + end) / 2,
-              width: start.dx == end.dx ? width : itemDim,
-              height: start.dy == end.dy ? width : itemDim,
+              center: (link.a + link.b) / 2,
+              width: math.max(
+                (link.a.dx - link.b.dx).abs(),
+                width,
+              ),
+              height: math.max(
+                (link.a.dy - link.b.dy).abs(),
+                width,
+              ),
             ),
     );
     // apply fading with color filter.
@@ -168,6 +157,6 @@ class PatternLockLinkGradientPainter extends PatternLockLinkPainter {
       anim,
       0,
     ]);
-    canvas.drawLine(start, end, paint);
+    canvas.drawLine(link.a, link.b, paint);
   }
 }

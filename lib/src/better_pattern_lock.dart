@@ -55,6 +55,10 @@ class PatternLock extends StatefulWidget {
   /// Whether to do [HapticFeedback] on cell activation.
   final bool enableFeedback;
 
+  /// Whether to draw a link from last activated cell to
+  /// current pointer location.
+  final bool drawLineToPointer;
+
   /// Curve to use when animating changes.
   final Curve animationCurve;
 
@@ -77,6 +81,7 @@ class PatternLock extends StatefulWidget {
     this.cellBuilder,
     this.onUpdate,
     this.enableFeedback = true,
+    this.drawLineToPointer = false,
     this.animationCurve = Curves.linear,
   })  : assert(
           width > 0 && height > 0,
@@ -98,6 +103,8 @@ class _PatternLockState extends State<PatternLock>
   final gk = GlobalKey();
   final testGK = GlobalKey();
   final pattern = <int>[];
+
+  final pointer = ValueNotifier<Offset?>(null);
 
   // The whole system works with a single controller, and is optimized to
   // reduce the amount of rebuilds.
@@ -128,6 +135,7 @@ class _PatternLockState extends State<PatternLock>
   @override
   void dispose() {
     controller.dispose();
+    pointer.dispose();
     super.dispose();
   }
 
@@ -169,7 +177,9 @@ class _PatternLockState extends State<PatternLock>
                   child: _LinkPainterWidget(
                     painter: widget.linkPainter ?? _defaultPainter(context),
                     size: (width: widget.width, height: widget.height),
+                    lineToPointer: widget.drawLineToPointer,
                     curve: widget.animationCurve,
+                    currentPointer: pointer,
                     controller: controller,
                     pattern: pattern,
                     itemDim: dim,
@@ -271,11 +281,10 @@ class _PatternLockState extends State<PatternLock>
     if (rb == null) return;
     // pointer position is global, compare apples to apples
     final globalOffset = rb.localToGlobal(Offset.zero);
-    final rect = globalOffset & rb.size;
-    // see if pointer is within pattern lock bounds.
-    if (!rect.contains(position)) return;
     position -= globalOffset;
-
+    if (widget.drawLineToPointer) {
+      pointer.value = position;
+    }
     final x = position.dx ~/ cellDim;
     final y = position.dy ~/ cellDim;
     // check if pointer is within activation area
@@ -305,6 +314,7 @@ class _PatternLockState extends State<PatternLock>
   }
 
   void onUp() {
+    pointer.value = null;
     if (widget.enableFeedback) {
       HapticFeedback.selectionClick();
     }
@@ -336,31 +346,22 @@ class _PatternCellAnimatedBuilder extends StatefulWidget {
 
 class _PatternCellAnimatedBuilderState
     extends State<_PatternCellAnimatedBuilder> {
-  late AnimationController controller;
-
   double value = 0.0; // current value of cell
   int lastTimestamp = 0; // last timestamp of animation
 
   @override
   void initState() {
-    controller = widget.controller;
-    controller.addListener(_listener);
+    widget.controller.addListener(_listener);
     super.initState();
   }
 
   @override
   void didUpdateWidget(covariant _PatternCellAnimatedBuilder oldWidget) {
-    if (widget.controller != controller) {
-      controller.removeListener(_listener);
-      controller = widget.controller;
-      controller.addListener(_listener);
-    }
-
     if (oldWidget.isActive != widget.isActive) {
       lastTimestamp = _now();
     }
 
-    if (!controller.isAnimating) {
+    if (!widget.controller.isAnimating) {
       value = widget.isActive ? 1.0 : 0.0;
     }
 
@@ -375,7 +376,7 @@ class _PatternCellAnimatedBuilderState
 
   @override
   void dispose() {
-    controller.removeListener(_listener);
+    widget.controller.removeListener(_listener);
     super.dispose();
   }
 
@@ -383,7 +384,7 @@ class _PatternCellAnimatedBuilderState
     final target = widget.isActive ? 1.0 : 0.0;
     if (value == target) return value;
 
-    if (controller.isCompleted || controller.isDismissed) {
+    if (widget.controller.isCompleted || widget.controller.isDismissed) {
       return target;
     }
 
@@ -391,7 +392,7 @@ class _PatternCellAnimatedBuilderState
     final deltaT = now - lastTimestamp;
     lastTimestamp = now;
 
-    final progress = deltaT / controller.duration!.inMilliseconds;
+    final progress = deltaT / widget.controller.duration!.inMilliseconds;
     return widget.isActive ? value + progress : value - progress;
   }
 
