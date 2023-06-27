@@ -226,7 +226,7 @@ class _PatternLockState extends State<PatternLock>
           shape: aa.shape.isCircle ? BoxShape.circle : BoxShape.rectangle,
           color: Color.lerp(
             Theme.of(ctx).colorScheme.background,
-            Theme.of(ctx).colorScheme.secondary,
+            Theme.of(ctx).colorScheme.primary,
             anim,
           )!,
           border: Border.all(
@@ -241,7 +241,7 @@ class _PatternLockState extends State<PatternLock>
 
   PatternLockLinkPainter _defaultPainter(BuildContext context) {
     return PatternLockLinkColorPainter(
-      color: Theme.of(context).colorScheme.secondary,
+      color: Theme.of(context).colorScheme.primary,
       width: 5.0,
     );
   }
