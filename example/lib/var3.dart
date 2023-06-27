@@ -28,7 +28,7 @@ class Variant3 extends StatelessWidget {
             ),
           );
       },
-      linkageSettings: PatternLockLinkageSettings.distance(3),
+      linkageConfig: PatternLockLinkageConfig.distance(3),
       linkPainter: const PatternLockLinkGradientPainter(
         width: 10.0,
         gradient: SweepGradient(

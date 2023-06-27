@@ -9,6 +9,7 @@ part 'active_area.dart';
 part 'custom_layout_delegate.dart';
 part 'link_painter.dart';
 part 'linkage.dart';
+part 'linkage_config.dart';
 part 'linkage_vis.dart';
 part 'position_reporter.dart';
 part 'util.dart';
@@ -23,7 +24,7 @@ class PatternLock extends StatefulWidget {
   final int height;
 
   /// Controls the process of deciding which cells can and cannot connect.
-  final PatternLockLinkageSettings linkageSettings;
+  final PatternLockLinkageConfig linkageConfig;
 
   /// Painter for each link in pattern lock.
   final PatternLockLinkPainter? linkPainter;
@@ -73,7 +74,7 @@ class PatternLock extends StatefulWidget {
       units: PatternLockCellAreaUnits.relative,
       shape: PatternLockCellAreaShape.square,
     ),
-    this.linkageSettings = const DistanceBasedPatternLockLinkageSettings(
+    this.linkageConfig = const DistanceBasedPatternLockLinkageConfig(
       allowRepetitions: false,
       maxLinkDistance: 1,
     ),
@@ -307,7 +308,7 @@ class _PatternLockState extends State<PatternLock>
     )) return;
 
     final el = y * widget.width + x;
-    if (widget.linkageSettings.canConnect(
+    if (widget.linkageConfig.canConnect(
       (width: widget.width, height: widget.height),
       pattern,
       el,

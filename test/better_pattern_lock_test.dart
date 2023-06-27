@@ -28,7 +28,7 @@ void main() {
         units: PatternLockCellAreaUnits.relative,
         dimension: .75,
       ),
-      linkageSettings: PatternLockLinkageSettings.distance(2),
+      linkageConfig: PatternLockLinkageConfig.distance(2),
     ));
     final containers = find.byType(Container);
     expect(containers, findsNWidgets(25));
