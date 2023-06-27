@@ -12,7 +12,7 @@ with Flutter and is much more customizable.
 
 You can hide content behind a visual password. 
 You can use it as a kind of spoiler alert or a content gate. 
-You can use it in a login flow. Etc!
+You can use it in a login flow, etc.
 
 ## Usage
 
