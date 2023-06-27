@@ -57,12 +57,6 @@ class _PatternLockScreenState extends State<PatternLockScreen> {
     for (int i = 0; i < x * y; i++) {
       colors.add(0xff000000 + r.nextInt(0x00ffffff));
     }
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      setState(() {
-        x = 4;
-        y = 5;
-      });
-    });
     super.initState();
   }
 
