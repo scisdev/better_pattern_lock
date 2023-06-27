@@ -32,10 +32,6 @@ class PatternLockScreen extends StatefulWidget {
 
   @override
   State<PatternLockScreen> createState() => _PatternLockScreenState();
-
-  static _PatternLockScreenState _of(BuildContext context) {
-    return context.findAncestorStateOfType<_PatternLockScreenState>()!;
-  }
 }
 
 class _PatternLockScreenState extends State<PatternLockScreen> {
