@@ -1,7 +1,5 @@
 # Better Pattern Lock
 
----
-
 **_Well, 'better' is a subjective word. 
 This one allows for a lot more customization._**
 
