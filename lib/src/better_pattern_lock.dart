@@ -121,6 +121,10 @@ class _PatternLockState extends State<PatternLock>
       controller.stop();
     }
 
+    if (widget.drawLineToPointer != oldWidget.drawLineToPointer) {
+      if (!widget.drawLineToPointer) pointer.value = null;
+    }
+
     if (oldWidget.animationDuration != widget.animationDuration) {
       controller.duration = widget.animationDuration;
     }
