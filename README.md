@@ -5,7 +5,7 @@
 **_Well, 'better' is a subjective word. 
 This one allows for a lot more customization._**
 
-<img src="https://github.com/scisdev/better_pattern_lock/blob/master/media/demo.gif" height="550" />
+<img src="https://github.com/scisdev/better_pattern_lock/blob/master/media/demo.gif" height="350" />
 
 ## It's a pattern lock
 
