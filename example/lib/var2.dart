@@ -19,7 +19,6 @@ class Variant2 extends StatelessWidget {
             ),
           );
       },
-      linkageSettings: PatternLockLinkageSettings.distance(1),
       linkPainter: DashedLineConnector(Theme.of(context).primaryColor),
       drawLineToPointer: false,
       cellBuilder: (ctx, ind, anim) {

@@ -72,6 +72,26 @@ class _PatternLockScreenState extends State<PatternLockScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: ListenableBuilder(
+          listenable: c,
+          builder: (ctx, _) {
+            final title = switch (c.page?.round() ?? 0) {
+              0 => 'Default Implementation',
+              1 => 'Custom cells and connections',
+              2 => 'Custom cells, connections, link rules, dynamic dimensions',
+              _ => '',
+            };
+            return Text(
+              title,
+              maxLines: 3,
+              textAlign: TextAlign.center,
+            );
+          },
+        ),
+        toolbarHeight: 100.0,
+        centerTitle: true,
+      ),
       body: SafeArea(
         child: PageView(
           controller: c,

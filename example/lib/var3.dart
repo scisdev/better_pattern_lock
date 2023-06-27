@@ -27,11 +27,6 @@ class Variant3 extends StatelessWidget {
               ),
             ),
           );
-
-        PatternLockScreen._of(context).c.nextPage(
-          duration: const Duration(milliseconds: 350),
-          curve: Curves.easeOut,
-        );
       },
       linkageSettings: PatternLockLinkageSettings.distance(3),
       linkPainter: const PatternLockLinkGradientPainter(
@@ -49,7 +44,7 @@ class Variant3 extends StatelessWidget {
         ),
         isGlobal: true,
       ),
-      drawLineToPointer: false,
+      drawLineToPointer: true,
       cellBuilder: (ctx, ind, anim) {
         return Material(
           type: MaterialType.circle,
