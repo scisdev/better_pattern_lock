@@ -179,6 +179,8 @@ class _LinkCanvasPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final p = Paint()..strokeCap = StrokeCap.round;
+
+    // draw each connection
     for (final conn in connections.entries) {
       painter.paint(
         p,
@@ -191,6 +193,7 @@ class _LinkCanvasPainter extends CustomPainter {
       );
     }
 
+    // draw connection to pointer if necessary
     if (pattern.isNotEmpty && lineToPointer != null) {
       painter.paint(
         p,

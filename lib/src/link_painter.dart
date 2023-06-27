@@ -49,8 +49,10 @@ abstract class PatternLockLinkPainter {
     /// Dimension of each cell in pattern lock, in dpi
     double itemDim,
 
-    /// 0 for `gone`, 1 for `fully visible`.
-    /// Rate of change depends on [PatternLock.animationDuration].
+    /// Animation value for this link.
+    /// 0 for `gone`, 1 for `fully animated in`.
+    /// Already transformed by [PatternLock.animationCurve].
+    /// Rate of change is subject to [PatternLock.animationDuration].
     double anim,
   );
 }
