@@ -1,8 +1,11 @@
-import 'dart:math';
+import 'dart:math' as math;
 
 import 'package:better_pattern_lock/better_pattern_lock.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
+part 'var1.dart';
+part 'var2.dart';
+part 'var3.dart';
 
 void main() {
   runApp(const PatternLockApp());
@@ -16,7 +19,7 @@ class PatternLockApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.amber),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
       home: const PatternLockScreen(),
@@ -29,13 +32,25 @@ class PatternLockScreen extends StatefulWidget {
 
   @override
   State<PatternLockScreen> createState() => _PatternLockScreenState();
+
+  static _PatternLockScreenState _of(BuildContext context) {
+    return context.findAncestorStateOfType<_PatternLockScreenState>()!;
+  }
 }
 
 class _PatternLockScreenState extends State<PatternLockScreen> {
   int x = 3;
   int y = 3;
   final colors = <int>[];
-  final r = Random();
+  final r = math.Random();
+
+  final c = PageController(initialPage: 0);
+
+  @override
+  void dispose() {
+    c.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -64,102 +79,64 @@ class _PatternLockScreenState extends State<PatternLockScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Center(
-          child: FractionallySizedBox(
-            widthFactor: .75,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Center(
-                    child: PatternLock(
-                      width: x,
-                      height: y,
-                      onEntered: (pattern) {
-                        ScaffoldMessenger.of(context)
-                          ..removeCurrentSnackBar()
-                          ..showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'entered ${pattern.join('-')}',
-                              ),
-                            ),
-                          );
-                      },
-                      linkageSettings: PatternLockLinkageSettings.distance(3),
-                      linkPainter: const PatternLockLinkGradientPainter(
-                        width: 10.0,
-                        gradient: SweepGradient(
-                          center: FractionalOffset.center,
-                          colors: <Color>[
-                            Color(0xFF4285F4),
-                            Color(0xFF34A853),
-                            Color(0xFFFBBC05),
-                            Color(0xFFEA4335),
-                            Color(0xFF4285F4),
-                          ],
-                          stops: <double>[0.0, 0.25, 0.5, 0.75, 1.0],
-                        ),
-                        isGlobal: true,
-                      ),
-                      drawLineToPointer: true,
-                      cellBuilder: (ctx, ind, anim) {
-                        return Material(
-                          type: MaterialType.circle,
-                          color: Colors.transparent,
-                          elevation: 32.0 * anim,
-                          animationDuration: Duration.zero,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Color.lerp(
-                                Theme.of(ctx).colorScheme.background,
-                                Color(colors[ind]),
-                                anim,
-                              )!,
-                              border: Border.all(
-                                width: 1.0,
-                                color: Colors.grey,
-                                strokeAlign: -1.0,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                      cellActiveArea: const PatternLockCellActiveArea(
-                        shape: PatternLockCellAreaShape.circle,
-                        units: PatternLockCellAreaUnits.relative,
-                        dimension: .75,
-                      ),
-                      animationDuration: const Duration(milliseconds: 350),
-                    ),
-                  ),
-                  Slider(
-                    value: x.toDouble(),
-                    onChanged: (val) {
-                      setState(() {
-                        x = val.toInt();
-                      });
-                    },
-                    min: 1.0,
-                    max: 10.0,
-                    divisions: 10,
-                  ),
-                  Slider(
-                    value: y.toDouble(),
-                    onChanged: (val) {
-                      setState(() {
-                        y = val.toInt();
-                      });
-                    },
-                    min: 1.0,
-                    max: 10.0,
-                    divisions: 10,
-                  ),
-                ],
+        child: PageView(
+          controller: c,
+          padEnds: true,
+          children: [
+            const Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: 35.0,
+              ),
+              child: Center(
+                child: Variant1(),
               ),
             ),
-          ),
+            const Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: 35.0,
+              ),
+              child: Center(child: Variant2()),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 35.0,
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Variant3(
+                      x: x,
+                      y: y,
+                      colors: colors,
+                    ),
+                    Slider(
+                      value: x.toDouble(),
+                      onChanged: (val) {
+                        setState(() {
+                          x = val.toInt();
+                        });
+                      },
+                      min: 1.0,
+                      max: 10.0,
+                      divisions: 10,
+                    ),
+                    Slider(
+                      value: y.toDouble(),
+                      onChanged: (val) {
+                        setState(() {
+                          y = val.toInt();
+                        });
+                      },
+                      min: 1.0,
+                      max: 10.0,
+                      divisions: 10,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
