@@ -1,6 +1,6 @@
 name: better_pattern_lock
-description: A better pattern lock for Flutter.
-version: 1.0.0
+description: A pattern lock for Flutter. Just like in your old Samsung device, but this one is much more customizable.
+version: 1.0.1
 homepage: https://github.com/scisdev/better_pattern_lock
 
 environment:
